@@ -1,0 +1,115 @@
+version: '3.7'
+services:  
+  config-server:
+     image: config-server:v1
+     ports: 
+        - "8888:8888"
+     restart: always
+     networks: 
+        - apiservicesc
+  eureka-server:
+     image: eureka-server:v1
+     ports: 
+        - "8761:8761"
+     restart: always
+     networks: 
+        - apiservicesc        
+  mysql8-db-server:
+     image: mysql:8
+     ports: 
+        - "3306:3306"
+     restart: always
+     networks: 
+        - apiservicesc 
+     environment: 
+        MYSQL_DATABASE: db_springboot_cloud
+        MYSQL_ROOT_PASSWORD: Andrea_1204
+  posgres12-db-server:
+     image: postgres:12.2-alpine
+     ports:
+        - "5432:5432"
+     restart: always
+     networks:
+        - apiservicesc
+     environment: 
+        POSTGRES_DB: db_springboot_cloud
+        POSTGRES_PASSWORD: Andrea_1204        
+  product-service:
+     image: product-service:v1
+     restart: always
+     networks: 
+        - apiservicesc                          
+     depends_on: 
+        - config-server
+        - eureka-server
+        - mysql8-db-server
+  item-service:
+     image: item-service:v1
+     ports: 
+        - "8186:8186"
+        - "8005:8005"
+        - "8007:8007"
+     restart: always
+     networks: 
+        - apiservicesc                          
+     depends_on: 
+        - config-server
+        - eureka-server
+        - product-service
+  users-service:
+     image: users-service:v1
+     restart: always
+     networks:
+        - apiservicesc
+     depends_on: 
+        - config-server
+        - eureka-server
+        - posgres12-db-server
+  oauth-server:
+     image: oauth-server:v1
+     ports:
+        - "9100:9100"
+     restart: always
+     networks:
+        - apiservicesc
+     depends_on: 
+        - config-server
+        - eureka-server
+        - users-service        
+  zuul-server:
+     image: zuul-server:v1
+     ports: 
+        - "8088:8088"
+     restart: always
+     networks: 
+        - apiservicesc                          
+     depends_on: 
+        - config-server
+        - eureka-server
+        - product-service
+  rabbitmq38-server:
+     image: rabbitmq:3.8.2-management-alpine
+     ports:
+        - "15672:15672"
+        - "5672:5672"
+     restart: always
+     networks:
+        - apiservicesc
+  zipkin-server:
+     image: zipkin-server:v1
+     ports:
+        - "9411:9411"
+     restart: always
+     networks:
+        - apiservicesc
+     depends_on: 
+        - rabbitmq38-server
+        - mysql8-db-server
+     environment: 
+        RABBIT_ADDRESSES: rabbitmq38-server:5672
+        STORAGE_TYPE: mysql
+        MYSQL_USER: zipkin
+        MYSQL_PASS: Andrea_1204
+        MYSQL_HOST: mysql8-db-server        
+networks: 
+    apiservicesc:
