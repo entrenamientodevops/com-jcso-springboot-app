@@ -87,6 +87,7 @@ services:
         - config-server
         - eureka-server
         - product-service
+		- item-service
   rabbitmq38-server:
      image: rabbitmq:3.8.2-management-alpine
      ports:
